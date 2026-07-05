@@ -16,6 +16,13 @@ set APP_HOME=%DIRNAME%
 @rem Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
 set DEFAULT_JVM_OPTS=
 
+@rem Set local JDK if not already set in environment
+if not defined JAVA_HOME (
+    if exist "%DIRNAME%..\jdk\jdk-17.0.19+10" (
+        set "JAVA_HOME=%DIRNAME%..\jdk\jdk-17.0.19+10"
+    )
+)
+
 @rem Find java.exe
 if defined JAVA_HOME goto findJavaFromJavaHome
 
