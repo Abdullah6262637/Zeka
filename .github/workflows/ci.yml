@@ -1,0 +1,70 @@
+name: Zeka CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-backend:
+    name: Build & Test Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Cache Gradle Packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-backend-${{ hashFiles('zeka-backend/**/*.gradle*', 'zeka-backend/gradle.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-backend-
+
+      - name: Grant Execute Permission to Gradlew
+        run: chmod +x zeka-backend/gradlew
+
+      - name: Build & Run Tests
+        run: |
+          cd zeka-backend
+          ./gradlew build
+
+  build-android:
+    name: Build Android App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Cache Gradle Packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-android-${{ hashFiles('zeka-android/**/*.gradle*', 'zeka-android/gradle.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-android-
+
+      - name: Grant Execute Permission to Gradlew
+        run: chmod +x zeka-android/gradlew
+
+      - name: Build Debug APK
+        run: |
+          cd zeka-android
+          ./gradlew assembleDebug
