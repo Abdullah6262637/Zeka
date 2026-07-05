@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zeka-backend
+  namespace: default
+  labels:
+    app: zeka-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zeka-backend
+  template:
+    metadata:
+      labels:
+        app: zeka-backend
+    spec:
+      containers:
+        - name: zeka-backend-app
+          image: zeka-backend:latest
+          imagePullPolicy: Never # Forces local minikube/k8s image registry check
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_URL
+              value: "jdbc:postgresql://zeka-postgres-service:5432/zekadb"
+            - name: DB_USER
+              value: "zeka"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zeka-secrets
+                  key: postgres-password
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: zeka-secrets
+                  key: encryption-key
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: zeka-secrets
+                  key: jwt-secret
+            - name: REDIS_HOST
+              value: "zeka-redis-service"
+          readinessProbe:
+            httpGet:
+              path: /api/v1/auth/login # basic endpoint check
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/v1/auth/login
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zeka-backend-service
+  namespace: default
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080
+  selector:
+    app: zeka-backend

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="com_google_android_gms_fonts_certs">
+        <item>@array/com_google_android_gms_fonts_certs_dev</item>
+        <item>@array/com_google_android_gms_fonts_certs_prod</item>
+    </array>
+    <string-array name="com_google_android_gms_fonts_certs_dev">
+        <item>MIIEqDCCA5CgAwIBAgIJAN5GB4rMbatOMA0GCSqGSIb3DQEBBQUAMIGUMQswCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNTW91bnRhaW4gVmlldzEQMA4GA1UEChMHR29vZ2xlMRAwDgYDVQQLEwdQbGF5dG9uMRMwEQYDVQQDEwpHb29nbGUgUGxheTEhMB8GCSqGSIb3DQEJARYScGxheXRvbkBnb29nbGUuY29tMB4XDTEzMDExMTE5NDcwN1oXDTMzMDExMTE5NDcwN1owgZQxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpDYWxpZm9ybmlhMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MRAwDgYDVQQKEwdHb29nbGUxEDAOBgNVBAsTB1BsYXl0b24xEzARBgNVBAMTCkdvb2dsZSBQbGF5MSEwHwYJKoZIhvcNAQkBFhJwbGF5dG9uQGdvb2dsZS5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCpcrq25pP51e06D9i4uS152T7P1sH03w6rD7o5250vO... (truncated certificates)</item>
+    </string-array>
+    <string-array name="com_google_android_gms_fonts_certs_prod">
+        <item>MIIEQzCCAyugAwIBAgIJAN5GB4rMbatOMA0GCSqGSIb3DQEBBAUAMIGUMQswCQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNTW91bnRhaW4gVmlldzEQMA4GA1UEChMHR29vZ2xlMRAwDgYDVQQLEwdQbGF5dG9uMRMwEQYDVQQDEwpHb29nbGUgUGxheTEhMB8GCSqGSIb3DQEJARYScGxheXRvbkBnb29nbGUuY29tMB4XDTEzMDExMTE5NDcwN1oXDTMzMDExMTE5NDcwN1owgZQxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpDYWxpZm9ybmlhMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MRAwDgYDVQQKEwdHb29nbGUxEDAOBgNVBAsTB1BsYXl0b24xEzARBgNVBAMTCkdvb2dsZSBQbGF5MSEwHwYJKoZIhvcNAQkBFhJwbGF5dG9uQGdvb2dsZS5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCpcrq25pP51e06D9i4uS152T7P1sH03w6rD7o5250vO...</item>
+    </string-array>
+</resources>

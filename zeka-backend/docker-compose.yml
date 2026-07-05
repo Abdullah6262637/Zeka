@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: zeka-postgres
+    environment:
+      POSTGRES_USER: zeka
+      POSTGRES_PASSWORD: zeka_password
+      POSTGRES_DB: zekadb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: zeka-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio
+    container_name: zeka-minio
+    environment:
+      MINIO_ROOT_USER: zeka_admin
+      MINIO_ROOT_PASSWORD: zeka_minio_secret_password
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniostorage:/data
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  miniostorage:

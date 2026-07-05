@@ -1,0 +1,42 @@
+# Gradle & Kotlin Build Outputs
+.gradle/
+build/
+*/build/
+.kotlin/
+*.class
+*.log
+*.lock
+
+# Local JDK
+/jdk/
+
+# Android Studio & IntelliJ IDE configs
+.idea/
+*.iml
+*.ipr
+*.iws
+local.properties
+.navigation/
+captures/
+.externalNativeBuild/
+.cxx/
+**/src/main/play/
+
+# OS specific files
+.DS_Store
+.DS_Store?
+ehthumbs.db
+Thumbs.db
+
+# Secrets & Environment variables
+.env
+secrets.yaml
+k8s/k8s-secrets.yaml
+
+# Keystores & Signing files
+*.jks
+*.keystore
+
+# Compiled APKs (ignore all except the release showcase APK at root)
+*.apk
+!Zeka_App.apk

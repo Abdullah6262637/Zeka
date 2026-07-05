@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zeka-postgres
+  namespace: default
+spec:
+  serviceName: zeka-postgres-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zeka-postgres
+  template:
+    metadata:
+      labels:
+        app: zeka-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          ports:
+            - containerPort: 5432
+              name: pgport
+          env:
+            - name: POSTGRES_USER
+              value: zeka
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zeka-secrets
+                  key: postgres-password
+            - name: POSTGRES_DB
+              value: zekadb
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: pgdata
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zeka-postgres-service
+  namespace: default
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: zeka-postgres
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zeka-redis
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zeka-redis
+  template:
+    metadata:
+      labels:
+        app: zeka-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+              name: redisport
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zeka-redis-service
+  namespace: default
+spec:
+  ports:
+    - port: 6379
+      targetPort: 6379
+  selector:
+    app: zeka-redis
