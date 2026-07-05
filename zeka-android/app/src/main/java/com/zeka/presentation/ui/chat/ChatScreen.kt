@@ -3526,8 +3526,63 @@ fun AgentArtifactsPanel(
                 when (artifact.type) {
                     "plan" -> PlanChecklistCard(artifact = artifact)
                     "diff" -> DiffViewerCard(artifact = artifact)
+                    "screenshot" -> ScreenshotCard(artifact = artifact)
                     else -> DefaultArtifactCard(artifact = artifact)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun ScreenshotCard(
+    artifact: com.zeka.presentation.viewmodel.AgentArtifact,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Graphite.copy(alpha = 0.5f))
+            .border(1.5.dp, DividerColor, RoundedCornerShape(12.dp))
+            .padding(16.dp)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = artifact.title,
+                    color = Color(0xFF0099FF),
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = SpaceGroteskFontFamily,
+                    fontSize = 12.sp
+                )
+                Text(
+                    text = artifact.createdAt,
+                    color = OffWhite.copy(alpha = 0.4f),
+                    fontFamily = SpaceGroteskFontFamily,
+                    fontSize = 10.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0xFF0D0D0D))
+                    .border(1.dp, DividerColor, RoundedCornerShape(8.dp))
+            ) {
+                coil.compose.AsyncImage(
+                    model = artifact.content,
+                    contentDescription = artifact.title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                )
             }
         }
     }

@@ -533,6 +533,37 @@ class ChatViewModel : ViewModel() {
         }
     }
 
+    private fun pollAgentSessionStatus(sessionId: String, authToken: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            var polling = true
+            while (polling) {
+                try {
+                    val response = client.get("$backendUrl/api/v1/agent/session/$sessionId") {
+                        header(HttpHeaders.Authorization, "Bearer $authToken")
+                    }
+                    if (response.status == HttpStatusCode.OK) {
+                        val session = Json.decodeFromString<AgentSession>(response.bodyAsText())
+                        _agentSession.value = session
+                        loadAgentArtifacts(authToken)
+                        
+                        if (session.status != "running") {
+                            polling = false
+                        }
+                    } else {
+                        polling = false
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    polling = false
+                }
+                if (polling) {
+                    kotlinx.coroutines.delay(2000)
+                }
+            }
+            _isAgentRunning.value = false
+        }
+    }
+
     fun executeNextAgentStep(authToken: String) {
         val session = _agentSession.value ?: return
         _isAgentRunning.value = true
@@ -543,15 +574,13 @@ class ChatViewModel : ViewModel() {
                     contentType(ContentType.Application.Json)
                 }
                 if (response.status == HttpStatusCode.OK) {
-                    val updatedSession = Json.decodeFromString<AgentSession>(response.bodyAsText())
-                    _agentSession.value = updatedSession
-                    loadAgentArtifacts(authToken)
+                    pollAgentSessionStatus(session.sessionId, authToken)
                 } else {
                     _errorFlow.value = "Çalıştırma Hatası: ${response.status.value}"
+                    _isAgentRunning.value = false
                 }
             } catch (e: Exception) {
                 _errorFlow.value = "Hata: ${e.localizedMessage}"
-            } finally {
                 _isAgentRunning.value = false
             }
         }

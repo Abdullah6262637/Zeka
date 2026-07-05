@@ -140,6 +140,16 @@ object AgentLoopManager {
         if (result.exitCode == 0) {
             currentTask.status = "completed"
             session.currentTaskIndex++
+            
+            // Simüle edilmiş tarayıcı ekran görüntüsü (screenshot) artifact'i ekle
+            val mockScreenshotUrl = "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80"
+            ArtifactManager.saveArtifact(
+                sessionId = sessionId,
+                type = "screenshot",
+                title = "Arayüz Test Ekran Görüntüsü",
+                content = mockScreenshotUrl
+            )
+
             if (session.currentTaskIndex >= session.tasks.size) {
                 session.status = "completed"
             } else {

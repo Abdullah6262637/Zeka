@@ -107,13 +107,8 @@ fun Route.agentRoutes() {
                     return@post
                 }
 
-                val updatedSession = AgentLoopManager.executeNextStep(sessionId)
-                if (updatedSession == null) {
-                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Failed to execute next step"))
-                    return@post
-                }
-
-                call.respond(updatedSession)
+                com.zeka.sandbox.AgentQueueProcessor.enqueueSessionStep(sessionId)
+                call.respond(mapOf("status" to "enqueued"))
             }
 
             delete("/session/{sessionId}") {
