@@ -6,6 +6,18 @@ Projenin sürüm yönetimi [SemVer](https://semver.org/spec/v2.0.0.html) (Semant
 
 ---
 
+## [1.3.0-Phase3] - 2026-07-06
+
+### Eklendi
+- **Asenkron Arka Plan Kuyruğu & Bildirimler (Backend):**
+  - **Asenkron Kuyruk Servisi:** Kotlin Coroutines `Channel` tabanlı in-memory asenkron görev kuyruğu (`AgentQueueProcessor`) eklendi.
+  - **Asenkron POST Uç Noktası:** `/execute` isteği kuyruğa delege edilerek anında `status = "enqueued"` cevabı dönecek şekilde güncellendi.
+  - **Simüle FCM Bildirimleri:** Görev bittiğinde, onay gerektiğinde veya başarısız olduğunda bildirim basan `NotificationManager` eklendi.
+  - **Ekran Görüntüsü Desteği:** Sandbox'taki arayüz testleri tamamlandığında veritabanına otomatik `screenshot` türünde artifact yazan simülasyon mekanizması kuruldu.
+- **Asenkron Polling & Tarayıcı Görüntüleri (Android):**
+  - Adım yürütüldüğünde sunucuyu asenkron sorgulayan (2 saniyede bir polling) ve ajan durumu `running` olduğu sürece UI'ı güncelleyen `pollAgentSessionStatus` mekanizması.
+  - **Tarayıcı Ekran Görüntüsü Kartı:** Ajanın ürettiği screenshot URL'lerini Coil kütüphanesiyle görselleştiren neon çerçeveli premium `ScreenshotCard` eklendi.
+
 ## [1.2.0-Phase2] - 2026-07-06
 
 ### Eklendi
