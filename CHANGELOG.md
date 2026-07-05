@@ -6,6 +6,18 @@ Projenin sürüm yönetimi [SemVer](https://semver.org/spec/v2.0.0.html) (Semant
 
 ---
 
+## [1.4.0-Phase4] - 2026-07-06
+
+### Eklendi
+- **Bellek (Memory) & Kota (Quota) Yönetimi (Backend):**
+  - **Veritabanı Şeması:** Ajanın başarılı komut ve kararlarını vektör benzeri formatta tutan `AgentMemory` ve kullanıcı başına kaynak takibi yapan `UserQuotas` tabloları eklendi.
+  - **Memory & Quota Servisleri:** Kota kontrollerini yürüten `QuotaManager` ve başarılı komutları kaydeden `MemoryManager` servisleri geliştirildi.
+  - **Dinamik Skill Yükleyici:** Projedeki `.agents/skills/<skill_name>/SKILL.md` kurallarını okuyup parser'dan geçiren ve LLM Planner sistem talimatlarına enjekte eden `PromptSkillLoader` entegre edildi.
+- **Docker Sandbox Güvenlik Sıkılaştırması (Backend):**
+  - Konteyner başlatılırken RAM kullanım sınırı (`1024m`) ve CPU işlemci sınırı (`1.0` - 1 Core) getirilerek sunucu kaynakları koruma altına alındı.
+- **Ajan Bellek ve Kota Paneli (Android):**
+  - Kod Modu ekranına, çalışma alanı bilgisinin hemen altına kalan Token limitini, kalan CPU saniyesini ve aktif bellek kaydı adedini gösteren şık monokrom statü widget'ı eklendi.
+
 ## [1.3.0-Phase3] - 2026-07-06
 
 ### Eklendi
