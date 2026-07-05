@@ -1,0 +1,29 @@
+# CHANGELOG
+
+Tüm önemli değişiklikler bu dosyada listelenecektir.
+
+Projenin sürüm yönetimi [SemVer](https://semver.org/spec/v2.0.0.html) (Semantic Versioning) standartlarına uygun olarak yapılmaktadır.
+
+---
+
+## [1.0.0] - 2026-07-06
+
+### Eklendi
+- **Android Mobil İstemci (`zeka-android`):**
+  - Jetpack Compose tabanlı AMOLED dostu "Pure Black" & "Graphite" monokrom görsel kimlik.
+  - Room DB ile sohbet geçmişi ve konfigürasyon önbellekleme desteği.
+  - Android Keystore tabanlı `EncryptedSharedPreferences` ile şifreli API anahtarı depolama.
+  - Yerel Text-To-Speech (TTS) ve Speech-To-Text (STT) entegrasyonu.
+  - MCP, Yetenek (Skills) ve Eklenti (Plugins) katalog arayüzleri.
+- **Ktor Backend Sunucusu (`zeka-backend`):**
+  - Kotlin Ktor tabanlı, Exposed ORM kullanan veri katmanı.
+  - JWT tabanlı oturum yönetimi ve Redis istek hız sınırlayıcı (Rate limiter).
+  - MinIO (S3) dosya depolama sistemi.
+  - Kullanıcı API anahtarları için **AES-256-GCM** şifreleme/deşifreleme güvenlik servisi.
+- **CI/CD & Kubernetes:**
+  - GitHub Actions ile otomatik backend test/build ve Android debug APK derleme hatları.
+  - Tek tıkla yerel veya uzak cluster kurulumu sağlayan `deploy-k8s.ps1` PowerShell betiği.
+
+### Değişti
+- Standart aniden açılan Compose Dialog'ları kaldırılarak yerine aşağıdan yukarıya pürüzsüzce kayan `AnimatedVisibility` overlay panelleri yerleştirildi.
+- Yetenek ve Eklenti kartları MCP marka logolarından bağımsız hale getirilerek işlevlerine uygun monokrom sistem simgeleriyle özelleştirildi.
