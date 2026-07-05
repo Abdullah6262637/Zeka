@@ -6,6 +6,19 @@ Projenin sürüm yönetimi [SemVer](https://semver.org/spec/v2.0.0.html) (Semant
 
 ---
 
+## [1.1.0-Phase1] - 2026-07-06
+
+### Eklendi
+- **Kod Modu Altyapısı (Backend):**
+  - **Docker Sandbox Servisi:** Java `ProcessBuilder` tabanlı izole ve kaynak sınırlı `node:18-alpine` konteyner yönetimi (`DockerSandboxManager`).
+  - **Agent Loop & ReAct Altyapısı:** LLM planlayıcı ve adım adım sandbox komut yürütücü (`AgentLoopManager`).
+  - **Ktor Uç Noktaları:** `/api/v1/agent/session` üzerinden session başlatma, yürütme ve durdurma API uçları (`AgentRoutes`).
+- **Kod Modu Arayüzü (Android):**
+  - Segmented sliding control ile Sohbet ve Kod Modu arasında pürüzsüz geçiş.
+  - Çalışma alanı seçici dialog ekranı (`WorkspaceSelectionDialog`).
+  - Otonom adımları izleyen zaman çizelgesi ve monokrom Linux terminal log konsolu (`AgentTerminalPanel`).
+  - Kritik veya tehlikeli komutlar için mobil onay kartı (Human-in-the-loop).
+
 ## [1.0.0] - 2026-07-06
 
 ### Eklendi
