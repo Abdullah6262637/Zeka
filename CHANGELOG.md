@@ -6,6 +6,20 @@ Projenin sürüm yönetimi [SemVer](https://semver.org/spec/v2.0.0.html) (Semant
 
 ---
 
+## [1.2.0-Phase2] - 2026-07-06
+
+### Eklendi
+- **Canlı Takip & Artifact Altyapısı (Backend):**
+  - **Veritabanı Tablosu:** Planlar, diff çıktıları ve logları saklamak için `Artifacts` tablosu oluşturuldu ve auto-migrate listesine eklendi.
+  - **Artifact Servisi:** Ajan planı ve terminal loglarını veritabanına kaydeden ve getiren `ArtifactManager` servisi eklendi.
+  - **GET Uç Noktası:** Oturum bazlı artifact'leri sorgulayan `/api/v1/agent/session/{sessionId}/artifacts` route eklendi.
+- **Canlı Takip & Sekmeli Görünüm (Android):**
+  - Kod modunda "Konsol" ve "Çıktılar" (Artifacts) arasında pürüzsüz geçiş sağlayan monokrom sliding indicator tab bar arayüzü entegre edildi.
+  - **Plan Checklist Kartı:** Ajanın oluşturduğu planı checkbox'lar ile interaktif listeye döken `PlanChecklistCard` eklendi.
+  - **Kod Değişikliği Diff Kartı:** Yapılan kod satırı ekleme/silmelerini monokrom yeşil/kırmızı renklendirme ile gösteren mobil uyumlu `DiffViewerCard` eklendi.
+- **Zero-Config Geliştirme (Sunucu & İstemci):**
+  - `gradlew.bat` dosyaları güncellenerek sistemde Java tanımlı olmasa dahi kök dizindeki yerel JDK'yı otomatik olarak `JAVA_HOME` olarak tanımlayan yapı kuruldu.
+
 ## [1.1.0-Phase1] - 2026-07-06
 
 ### Eklendi
