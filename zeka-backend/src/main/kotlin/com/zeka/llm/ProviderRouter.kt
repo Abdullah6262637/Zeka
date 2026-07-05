@@ -360,4 +360,20 @@ object ProviderRouter {
             }
         }
     }
+
+    suspend fun executeChat(
+        provider: LlmProvider,
+        apiKey: String,
+        baseUrl: String?,
+        modelName: String,
+        systemPrompt: String?,
+        prompt: String,
+        temperature: Double = 0.7
+    ): String {
+        val sb = StringBuilder()
+        streamChat(provider, apiKey, baseUrl, modelName, systemPrompt, prompt, temperature).collect {
+            sb.append(it)
+        }
+        return sb.toString()
+    }
 }

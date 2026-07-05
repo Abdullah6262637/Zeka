@@ -22,6 +22,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -97,6 +99,13 @@ fun ChatScreen(
     var activeCatalogMode by remember { mutableStateOf<String?>(null) }
     var selectedAttachment by remember { mutableStateOf<Attachment?>(null) }
     var currentConversationId by remember { mutableStateOf("default-conversation-id") }
+    var isCodeMode by remember { mutableStateOf(false) }
+    var selectedWorkspaceName by remember { mutableStateOf<String?>(null) }
+    var selectedWorkspacePath by remember { mutableStateOf<String?>(null) }
+    var showWorkspaceDialog by remember { mutableStateOf(false) }
+
+    val agentSession by viewModel.agentSession.collectAsState()
+    val isAgentRunning by viewModel.isAgentRunning.collectAsState()
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -341,7 +350,77 @@ fun ChatScreen(
                             }
                         }
 
-                        // Chat Messages list
+                        // Mode Switcher Control Row
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            SegmentedModeSelector(
+                                isCodeMode = isCodeMode,
+                                onModeChanged = { codeMode ->
+                                    isCodeMode = codeMode
+                                    if (codeMode && selectedWorkspacePath == null) {
+                                        showWorkspaceDialog = true
+                                    }
+                                }
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Active Workspace Info Row
+                        if (isCodeMode && selectedWorkspaceName != null) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Folder,
+                                        contentDescription = "Workspace",
+                                        tint = Color(0xFF00FFCC),
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Çalışma Alanı: $selectedWorkspaceName",
+                                        color = Color(0xFF00FFCC),
+                                        fontFamily = SpaceGroteskFontFamily,
+                                        fontSize = 11.sp
+                                    )
+                                }
+                                Text(
+                                    text = "Değiştir",
+                                    color = OffWhite.copy(alpha = 0.5f),
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = SpaceGroteskFontFamily,
+                                    fontSize = 11.sp,
+                                    modifier = Modifier.clickable { showWorkspaceDialog = true }
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
+                        // Main Content Area
+                        if (isCodeMode && agentSession != null) {
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                            ) {
+                                AgentTerminalPanel(
+                                    session = agentSession!!,
+                                    isRunning = isAgentRunning,
+                                    onApproveNextStep = {
+                                        viewModel.executeNextAgentStep("mock-jwt-token")
+                                    }
+                                )
+                            }
+                        } else {
+                            // Chat Messages list
                             LazyColumn(
                                 state = listState,
                                 modifier = Modifier
@@ -401,8 +480,9 @@ fun ChatScreen(
                                     )
                                 }
                             }
+                        }
 
-                            // Input Bar Area
+                        // Input Bar Area
                             ChatInputBar(
                                 textValue = textState,
                                 onValueChange = { textState = it },
@@ -434,15 +514,32 @@ fun ChatScreen(
                                             val attachment = selectedAttachment
                                             textState = ""
                                             selectedAttachment = null
-                                            viewModel.sendMessageStream(
-                                                context = context,
-                                                conversationId = currentConversationId,
-                                                provider = "anthropic",
-                                                model = "claude-3-5-sonnet",
-                                                prompt = prompt,
-                                                authToken = "mock-jwt-token",
-                                                attachment = attachment
-                                            )
+
+                                            val addedModels = com.zeka.data.local.model.ConfiguredModelStore.loadModels(context)
+                                            val matchedModel = addedModels.find { it.name == selectedModel }
+                                            val activeProvider = matchedModel?.provider?.lowercase() ?: "anthropic"
+                                            val activeModelName = matchedModel?.name ?: "claude-3-5-sonnet"
+
+                                            if (isCodeMode) {
+                                                viewModel.startAgentSession(
+                                                    authToken = "mock-jwt-token",
+                                                    workspaceId = "Abdullah6262637-zeka",
+                                                    hostPath = selectedWorkspacePath ?: "c:\\Users\\HP\\Desktop\\Zeka",
+                                                    prompt = prompt,
+                                                    provider = activeProvider,
+                                                    modelName = activeModelName
+                                                )
+                                            } else {
+                                                viewModel.sendMessageStream(
+                                                    context = context,
+                                                    conversationId = currentConversationId,
+                                                    provider = activeProvider,
+                                                    model = activeModelName,
+                                                    prompt = prompt,
+                                                    authToken = "mock-jwt-token",
+                                                    attachment = attachment
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -472,6 +569,22 @@ fun ChatScreen(
                                     context = context
                                 )
                             }
+                        }
+
+                        if (showWorkspaceDialog) {
+                            WorkspaceSelectionDialog(
+                                onWorkspaceSelected = { name, path ->
+                                    selectedWorkspaceName = name
+                                    selectedWorkspacePath = path
+                                    showWorkspaceDialog = false
+                                },
+                                onDismiss = {
+                                    showWorkspaceDialog = false
+                                    if (selectedWorkspacePath == null) {
+                                        isCodeMode = false
+                                    }
+                                }
+                            )
                         }
                     }
                 }
@@ -2973,5 +3086,363 @@ fun AnimatedAddPluginOverlay(
         }
     }
 }
+
+@Composable
+fun SegmentedModeSelector(
+    isCodeMode: Boolean,
+    onModeChanged: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val transition = updateTransition(targetState = isCodeMode, label = "ModeTransition")
+    
+    val indicatorOffset by transition.animateDp(
+        transitionSpec = { spring(stiffness = Spring.StiffnessLow) },
+        label = "IndicatorOffset"
+    ) { codeMode ->
+        if (codeMode) 130.dp else 0.dp
+    }
+
+    Box(
+        modifier = modifier
+            .width(268.dp)
+            .height(40.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(Graphite.copy(alpha = 0.6f))
+            .border(1.dp, DividerColor.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+            .padding(3.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .offset(x = indicatorOffset)
+                .width(132.dp)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(17.dp))
+                .background(
+                    if (isCodeMode) {
+                        Brush.horizontalGradient(listOf(Color(0xFF00FFCC), Color(0xFF0099FF)))
+                    } else {
+                        Brush.horizontalGradient(listOf(Color(0xFF8A2BE2), Color(0xFF5D3FD3)))
+                    }
+                )
+        )
+
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { onModeChanged(false) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Sohbet",
+                    color = if (!isCodeMode) Color.White else OffWhite.copy(alpha = 0.6f),
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = SpaceGroteskFontFamily,
+                    fontSize = 13.sp
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { onModeChanged(true) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Kod Modu",
+                    color = if (isCodeMode) Color.White else OffWhite.copy(alpha = 0.6f),
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = SpaceGroteskFontFamily,
+                    fontSize = 13.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun WorkspaceSelectionDialog(
+    onWorkspaceSelected: (name: String, path: String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(Graphite)
+                .border(1.dp, DividerColor, RoundedCornerShape(16.dp))
+                .padding(20.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Çalışma Alanı Seç",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = SpaceGroteskFontFamily,
+                    fontSize = 18.sp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Ajanın izole Docker sandbox ortamında kod geliştireceği proje klasörünü seçin.",
+                    color = OffWhite.copy(alpha = 0.7f),
+                    fontFamily = SpaceGroteskFontFamily,
+                    fontSize = 13.sp
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Default active workspace option
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(PureBlack)
+                        .border(1.dp, Color(0xFF8A2BE2).copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                        .clickable {
+                            onWorkspaceSelected("Abdullah6262637/Zeka", "c:\\Users\\HP\\Desktop\\Zeka")
+                        }
+                        .padding(16.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "Abdullah6262637/Zeka",
+                            color = Color(0xFF00FFCC),
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = SpaceGroteskFontFamily,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "c:\\Users\\HP\\Desktop\\Zeka",
+                            color = OffWhite.copy(alpha = 0.5f),
+                            fontFamily = SpaceGroteskFontFamily,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text(
+                            text = "İptal",
+                            color = OffWhite.copy(alpha = 0.7f),
+                            fontFamily = SpaceGroteskFontFamily,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AgentTerminalPanel(
+    session: com.zeka.presentation.viewmodel.AgentSession,
+    isRunning: Boolean,
+    onApproveNextStep: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(PureBlack)
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "GÖREV PLANI VE AKIŞI",
+            color = Color(0xFF00FFCC),
+            fontWeight = FontWeight.Bold,
+            fontFamily = SpaceGroteskFontFamily,
+            fontSize = 12.sp
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Steps timeline
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, DividerColor, RoundedCornerShape(8.dp))
+                .background(Graphite.copy(alpha = 0.3f))
+                .padding(12.dp)
+        ) {
+            session.tasks.forEachIndexed { index, task ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clip(CircleShape)
+                            .background(
+                                when (task.status) {
+                                    "completed" -> Color(0xFF00FF99).copy(alpha = 0.2f)
+                                    "running" -> Color(0xFF0099FF).copy(alpha = 0.2f)
+                                    "failed" -> Color(0xFFFF3366).copy(alpha = 0.2f)
+                                    else -> Color.Gray.copy(alpha = 0.2f)
+                                }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = (index + 1).toString(),
+                            color = when (task.status) {
+                                "completed" -> Color(0xFF00FF99)
+                                "running" -> Color(0xFF0099FF)
+                                "failed" -> Color(0xFFFF3366)
+                                else -> Color.Gray
+                            },
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = SpaceGroteskFontFamily,
+                            fontSize = 10.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = task.title,
+                            color = if (task.status == "running") Color.White else OffWhite.copy(alpha = 0.8f),
+                            fontWeight = if (task.status == "running") FontWeight.Bold else FontWeight.Normal,
+                            fontFamily = SpaceGroteskFontFamily,
+                            fontSize = 12.sp
+                        )
+                        Text(
+                            text = task.command,
+                            color = OffWhite.copy(alpha = 0.4f),
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 9.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Terminal Log Console
+        Text(
+            text = "TERMİNAL LOG ÇIKTISI",
+            color = OffWhite.copy(alpha = 0.5f),
+            fontWeight = FontWeight.Bold,
+            fontFamily = SpaceGroteskFontFamily,
+            fontSize = 10.sp
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+
+        val currentTask = session.tasks.getOrNull(session.currentTaskIndex) ?: session.tasks.lastOrNull()
+        val logs = if (currentTask != null) {
+            val stdout = currentTask.stdout
+            val stderr = currentTask.stderr
+            if (stdout.isBlank() && stderr.isBlank()) {
+                "Komut bekleniyor..."
+            } else {
+                stdout + stderr
+            }
+        } else {
+            "Sistem hazır."
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFF0D0D0D))
+                .border(1.dp, DividerColor, RoundedCornerShape(8.dp))
+                .padding(12.dp)
+        ) {
+            Text(
+                text = logs,
+                color = if (currentTask?.status == "failed") Color(0xFFFF3366) else Color(0xFF00FF99),
+                fontFamily = FontFamily.Monospace,
+                fontSize = 11.sp,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+            )
+        }
+
+        // Approval Card / Control Button
+        if (session.status == "planned" && !isRunning) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFF1E140A))
+                    .border(1.dp, Color(0xFFFF9900).copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                    .padding(16.dp)
+            ) {
+                Column {
+                    Text(
+                        text = "ONAY BEKLİYOR",
+                        color = Color(0xFFFF9900),
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = SpaceGroteskFontFamily,
+                        fontSize = 12.sp
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Bir sonraki komut çalıştırılmak üzere onayınızı bekliyor:",
+                        color = OffWhite.copy(alpha = 0.8f),
+                        fontFamily = SpaceGroteskFontFamily,
+                        fontSize = 12.sp
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(PureBlack)
+                            .padding(8.dp)
+                    ) {
+                        Text(
+                            text = currentTask?.command ?: "echo",
+                            color = Color.White,
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 11.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = onApproveNextStep,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00FFCC), contentColor = PureBlack),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth().height(40.dp)
+                    ) {
+                        Text(
+                            text = "Onayla ve Çalıştır",
+                            fontFamily = SpaceGroteskFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 

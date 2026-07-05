@@ -37,6 +37,5 @@ k8s/k8s-secrets.yaml
 *.jks
 *.keystore
 
-# Compiled APKs (ignore all except the release showcase APK at root)
+# Compiled APKs (ignore all)
 *.apk
-!Zeka_App.apk

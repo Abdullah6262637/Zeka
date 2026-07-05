@@ -97,7 +97,7 @@ fun Route.fileRoutes() {
                     Attachments.insert {
                         it[messageId] = msgId
                         it[fileType] = fileExtension
-                        it[storageKey] = storageKey
+                        it[Attachments.storageKey] = storageKey
                         it[originalName] = fileName
                         it[sizeBytes] = bytes.size.toLong()
                         it[Attachments.extractedText] = extractedText

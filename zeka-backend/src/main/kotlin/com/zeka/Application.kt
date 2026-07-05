@@ -7,6 +7,7 @@ import com.zeka.routes.authRoutes
 import com.zeka.routes.chatRoutes
 import com.zeka.routes.fileRoutes
 import com.zeka.routes.personaRoutes
+import com.zeka.routes.agentRoutes
 import com.zeka.plugins.configureMonitoring
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -90,5 +91,6 @@ fun Application.module() {
         chatRoutes()
         fileRoutes()
         personaRoutes()
+        agentRoutes()
     }
 }

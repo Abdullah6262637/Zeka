@@ -26,6 +26,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import java.util.UUID
 
 @Serializable
@@ -465,4 +466,96 @@ class ChatViewModel : ViewModel() {
             }
         }
     }
+
+    private val _agentSession = MutableStateFlow<AgentSession?>(null)
+    val agentSession = _agentSession.asStateFlow()
+
+    private val _isAgentRunning = MutableStateFlow(false)
+    val isAgentRunning = _isAgentRunning.asStateFlow()
+
+    fun startAgentSession(
+        authToken: String,
+        workspaceId: String,
+        hostPath: String,
+        prompt: String,
+        provider: String,
+        modelName: String
+    ) {
+        _isAgentRunning.value = true
+        _errorFlow.value = null
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val response = client.post("$backendUrl/api/v1/agent/session") {
+                    header(HttpHeaders.Authorization, "Bearer $authToken")
+                    contentType(ContentType.Application.Json)
+                    setBody(
+                        kotlinx.serialization.json.buildJsonObject {
+                            put("workspaceId", workspaceId)
+                            put("hostPath", hostPath)
+                            put("prompt", prompt)
+                            put("provider", provider)
+                            put("modelName", modelName)
+                        }
+                    )
+                }
+                if (response.status == HttpStatusCode.OK) {
+                    val session = Json.decodeFromString<AgentSession>(response.bodyAsText())
+                    _agentSession.value = session
+                } else {
+                    _errorFlow.value = "Başlatma Hatası: ${response.status.value}"
+                }
+            } catch (e: Exception) {
+                _errorFlow.value = "Hata: ${e.localizedMessage}"
+            } finally {
+                _isAgentRunning.value = false
+            }
+        }
+    }
+
+    fun executeNextAgentStep(authToken: String) {
+        val session = _agentSession.value ?: return
+        _isAgentRunning.value = true
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val response = client.post("$backendUrl/api/v1/agent/session/${session.sessionId}/execute") {
+                    header(HttpHeaders.Authorization, "Bearer $authToken")
+                    contentType(ContentType.Application.Json)
+                }
+                if (response.status == HttpStatusCode.OK) {
+                    val updatedSession = Json.decodeFromString<AgentSession>(response.bodyAsText())
+                    _agentSession.value = updatedSession
+                } else {
+                    _errorFlow.value = "Çalıştırma Hatası: ${response.status.value}"
+                }
+            } catch (e: Exception) {
+                _errorFlow.value = "Hata: ${e.localizedMessage}"
+            } finally {
+                _isAgentRunning.value = false
+            }
+        }
+    }
+
+    fun clearAgentSession() {
+        _agentSession.value = null
+    }
 }
+
+@Serializable
+data class AgentTask(
+    val id: String,
+    val title: String,
+    val command: String,
+    var status: String = "pending",
+    var stdout: String = "",
+    var stderr: String = ""
+)
+
+@Serializable
+data class AgentSession(
+    val sessionId: String,
+    val workspaceId: String,
+    val originalPrompt: String,
+    val tasks: List<AgentTask>,
+    var currentTaskIndex: Int = 0,
+    var status: String = "planned"
+)
