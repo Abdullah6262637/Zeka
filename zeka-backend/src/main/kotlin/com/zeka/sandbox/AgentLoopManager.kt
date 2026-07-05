@@ -21,6 +21,7 @@ data class AgentTask(
 data class AgentSession(
     val sessionId: String,
     val workspaceId: String,
+    val userId: String,
     val originalPrompt: String,
     val tasks: MutableList<AgentTask>,
     var currentTaskIndex: Int = 0,
@@ -35,6 +36,7 @@ object AgentLoopManager {
 
     suspend fun createSession(
         workspaceId: String,
+        hostPath: String,
         prompt: String,
         userId: UUID,
         apiKey: String,
@@ -43,6 +45,7 @@ object AgentLoopManager {
     ): AgentSession? {
         val sessionId = UUID.randomUUID().toString()
 
+        val skillsPrompt = PromptSkillLoader.loadSkillsFromWorkspace(hostPath)
         val systemPrompt = """
             Sen Zeka Antigravity otonom kodlama asistanısın. Kullanıcının verdiği göreve göre, Docker sandbox terminalinde sırasıyla çalıştırılacak komutları içeren adım adım bir plan oluşturmalısın.
             Çıktın SADECE şu JSON formatında olmalıdır (başka hiçbir metin veya açıklama ekleme):
@@ -54,6 +57,7 @@ object AgentLoopManager {
                 }
               ]
             }
+            $skillsPrompt
         """.trimIndent()
 
         try {
@@ -85,6 +89,7 @@ object AgentLoopManager {
             val session = AgentSession(
                 sessionId = sessionId,
                 workspaceId = workspaceId,
+                userId = userId.toString(),
                 originalPrompt = prompt,
                 tasks = tasksList,
                 currentTaskIndex = 0,
@@ -128,6 +133,15 @@ object AgentLoopManager {
         val currentTask = session.tasks[session.currentTaskIndex]
         currentTask.status = "running"
 
+        val userUuid = UUID.fromString(session.userId)
+        if (!QuotaManager.checkQuota(userUuid)) {
+            session.status = "failed"
+            currentTask.status = "failed"
+            currentTask.stderr = "HATA: Günlük kullanım kotası (CPU/Token) aşıldı."
+            ArtifactManager.saveArtifact(sessionId, "log", "Kota Aşımı: ${currentTask.title}", "Günlük kullanım limitleriniz tükendi.")
+            return session
+        }
+
         // Execute command inside sandbox
         val result = DockerSandboxManager.executeCommand(session.workspaceId, currentTask.command)
         currentTask.stdout = result.stdout
@@ -141,6 +155,16 @@ object AgentLoopManager {
             currentTask.status = "completed"
             session.currentTaskIndex++
             
+            // Deduct quota & Save memory
+            QuotaManager.consumeCpu(userUuid, 5)
+            QuotaManager.consumeTokens(userUuid, 150)
+            MemoryManager.saveMemory(
+                workspaceId = session.workspaceId,
+                taskTitle = currentTask.title,
+                command = currentTask.command,
+                content = "Başarılı komut yürütme. Çıktı boyutu: ${result.stdout.length} karakter."
+            )
+
             // Simüle edilmiş tarayıcı ekran görüntüsü (screenshot) artifact'i ekle
             val mockScreenshotUrl = "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80"
             ArtifactManager.saveArtifact(

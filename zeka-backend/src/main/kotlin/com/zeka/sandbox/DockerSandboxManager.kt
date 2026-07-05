@@ -25,6 +25,8 @@ object DockerSandboxManager {
             val process = ProcessBuilder(
                 "docker", "run", "-d",
                 "--name", containerName,
+                "--memory", "1024m",
+                "--cpus", "1.0",
                 "-v", "$hostPath:/workspace",
                 "-w", "/workspace",
                 "node:18-alpine",

@@ -372,38 +372,71 @@ fun ChatScreen(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Active Workspace Info Row
+                        // Active Workspace & Quota Info Panel
                         if (isCodeMode && selectedWorkspaceName != null) {
-                            Row(
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Graphite.copy(alpha = 0.4f))
+                                    .border(1.dp, DividerColor, RoundedCornerShape(12.dp))
+                                    .padding(12.dp)
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Folder,
-                                        contentDescription = "Workspace",
-                                        tint = Color(0xFF00FFCC),
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Folder,
+                                            contentDescription = "Workspace",
+                                            tint = Color(0xFF00FFCC),
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Çalışma Alanı: $selectedWorkspaceName",
+                                            color = Color(0xFF00FFCC),
+                                            fontFamily = SpaceGroteskFontFamily,
+                                            fontSize = 11.sp
+                                        )
+                                    }
                                     Text(
-                                        text = "Çalışma Alanı: $selectedWorkspaceName",
-                                        color = Color(0xFF00FFCC),
+                                        text = "Değiştir",
+                                        color = OffWhite.copy(alpha = 0.5f),
+                                        fontWeight = FontWeight.Bold,
                                         fontFamily = SpaceGroteskFontFamily,
-                                        fontSize = 11.sp
+                                        fontSize = 11.sp,
+                                        modifier = Modifier.clickable { showWorkspaceDialog = true }
                                     )
                                 }
-                                Text(
-                                    text = "Değiştir",
-                                    color = OffWhite.copy(alpha = 0.5f),
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = SpaceGroteskFontFamily,
-                                    fontSize = 11.sp,
-                                    modifier = Modifier.clickable { showWorkspaceDialog = true }
-                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = "Kalan Token: 49,850 / 50,000",
+                                        color = OffWhite.copy(alpha = 0.4f),
+                                        fontFamily = SpaceGroteskFontFamily,
+                                        fontSize = 10.sp
+                                    )
+                                    Text(
+                                        text = "Kalan CPU: 3,595 / 3,600 sn",
+                                        color = OffWhite.copy(alpha = 0.4f),
+                                        fontFamily = SpaceGroteskFontFamily,
+                                        fontSize = 10.sp
+                                    )
+                                    Text(
+                                        text = "Hafıza: Aktif (2 Kayıt)",
+                                        color = Color(0xFF00FF99),
+                                        fontWeight = FontWeight.Bold,
+                                        fontFamily = SpaceGroteskFontFamily,
+                                        fontSize = 10.sp
+                                    )
+                                }
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                         }

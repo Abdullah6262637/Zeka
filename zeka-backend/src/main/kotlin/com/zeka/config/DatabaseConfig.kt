@@ -34,7 +34,9 @@ object DatabaseConfig {
                 Messages,
                 Attachments,
                 Personas,
-                Artifacts
+                Artifacts,
+                AgentMemory,
+                UserQuotas
             )
         }
     }

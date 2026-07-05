@@ -52,6 +52,7 @@ fun Route.agentRoutes() {
 
                 val session = AgentLoopManager.createSession(
                     workspaceId = req.workspaceId,
+                    hostPath = req.hostPath,
                     prompt = req.prompt,
                     userId = userId,
                     apiKey = apiKey ?: "",

@@ -70,3 +70,20 @@ object Artifacts : UUIDTable("artifacts") {
     val content = text("content")
     val createdAt = datetime("created_at").default(LocalDateTime.now())
 }
+
+object AgentMemory : UUIDTable("agent_memories") {
+    val workspaceId = varchar("workspace_id", 100)
+    val taskTitle = varchar("task_title", 255)
+    val successfulCommand = varchar("successful_command", 255)
+    val content = text("content")
+    val createdAt = datetime("created_at").default(LocalDateTime.now())
+}
+
+object UserQuotas : UUIDTable("user_quotas") {
+    val userId = reference("user_id", Users)
+    val tokenLimit = integer("token_limit").default(50000)
+    val tokenUsed = integer("token_used").default(0)
+    val cpuLimitSeconds = integer("cpu_limit_seconds").default(3600)
+    val cpuUsedSeconds = integer("cpu_used_seconds").default(0)
+    val updatedAt = datetime("updated_at").default(LocalDateTime.now())
+}
