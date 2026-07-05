@@ -91,6 +91,24 @@ object AgentLoopManager {
                 status = "planned"
             )
 
+            // Save artifacts to DB
+            ArtifactManager.saveArtifact(sessionId, "plan", "Görev Planı: " + (if (prompt.length > 25) prompt.take(22) + "..." else prompt), finalJson)
+            
+            val mockDiff = """
+                diff --git a/src/main/kotlin/com/zeka/Application.kt b/src/main/kotlin/com/zeka/Application.kt
+                index 4f3a2b..9d8c7e 100644
+                --- a/src/main/kotlin/com/zeka/Application.kt
+                +++ b/src/main/kotlin/com/zeka/Application.kt
+                @@ -25,5 +25,6 @@
+                 fun main() {
+                -    embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
+                +    val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
+                +    embeddedServer(Netty, port = port, host = "0.0.0.0", module = Application::module)
+                         .start(wait = true)
+                 }
+            """.trimIndent()
+            ArtifactManager.saveArtifact(sessionId, "diff", "Kod Değişikliği (Konfigürasyon)", mockDiff)
+
             sessions[sessionId] = session
             return session
         } catch (e: Exception) {
@@ -114,6 +132,10 @@ object AgentLoopManager {
         val result = DockerSandboxManager.executeCommand(session.workspaceId, currentTask.command)
         currentTask.stdout = result.stdout
         currentTask.stderr = result.stderr
+
+        // Save log artifact to DB
+        val logContent = "Komut: ${currentTask.command}\n\nSTDOUT:\n${result.stdout}\n\nSTDERR:\n${result.stderr}"
+        ArtifactManager.saveArtifact(sessionId, "log", "Çıktı: ${currentTask.title}", logContent)
 
         if (result.exitCode == 0) {
             currentTask.status = "completed"

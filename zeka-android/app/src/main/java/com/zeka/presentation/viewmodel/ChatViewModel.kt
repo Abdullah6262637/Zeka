@@ -473,6 +473,26 @@ class ChatViewModel : ViewModel() {
     private val _isAgentRunning = MutableStateFlow(false)
     val isAgentRunning = _isAgentRunning.asStateFlow()
 
+    private val _agentArtifacts = MutableStateFlow<List<AgentArtifact>>(emptyList())
+    val agentArtifacts = _agentArtifacts.asStateFlow()
+
+    fun loadAgentArtifacts(authToken: String) {
+        val session = _agentSession.value ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val response = client.get("$backendUrl/api/v1/agent/session/${session.sessionId}/artifacts") {
+                    header(HttpHeaders.Authorization, "Bearer $authToken")
+                }
+                if (response.status == HttpStatusCode.OK) {
+                    val list = Json.decodeFromString<List<AgentArtifact>>(response.bodyAsText())
+                    _agentArtifacts.value = list
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     fun startAgentSession(
         authToken: String,
         workspaceId: String,
@@ -501,6 +521,7 @@ class ChatViewModel : ViewModel() {
                 if (response.status == HttpStatusCode.OK) {
                     val session = Json.decodeFromString<AgentSession>(response.bodyAsText())
                     _agentSession.value = session
+                    loadAgentArtifacts(authToken)
                 } else {
                     _errorFlow.value = "Başlatma Hatası: ${response.status.value}"
                 }
@@ -524,6 +545,7 @@ class ChatViewModel : ViewModel() {
                 if (response.status == HttpStatusCode.OK) {
                     val updatedSession = Json.decodeFromString<AgentSession>(response.bodyAsText())
                     _agentSession.value = updatedSession
+                    loadAgentArtifacts(authToken)
                 } else {
                     _errorFlow.value = "Çalıştırma Hatası: ${response.status.value}"
                 }
@@ -537,6 +559,7 @@ class ChatViewModel : ViewModel() {
 
     fun clearAgentSession() {
         _agentSession.value = null
+        _agentArtifacts.value = emptyList()
     }
 }
 
@@ -558,4 +581,14 @@ data class AgentSession(
     val tasks: List<AgentTask>,
     var currentTaskIndex: Int = 0,
     var status: String = "planned"
+)
+
+@Serializable
+data class AgentArtifact(
+    val id: String,
+    val sessionId: String,
+    val type: String,
+    val title: String,
+    val content: String,
+    val createdAt: String
 )

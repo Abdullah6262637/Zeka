@@ -83,6 +83,17 @@ fun Route.agentRoutes() {
                 call.respond(session)
             }
 
+            get("/session/{sessionId}/artifacts") {
+                val sessionId = call.parameters["sessionId"]
+                if (sessionId == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Session ID is required"))
+                    return@get
+                }
+
+                val artifacts = com.zeka.sandbox.ArtifactManager.getArtifactsForSession(sessionId)
+                call.respond(artifacts)
+            }
+
             post("/session/{sessionId}/execute") {
                 val sessionId = call.parameters["sessionId"]
                 if (sessionId == null) {

@@ -33,7 +33,8 @@ object DatabaseConfig {
                 Conversations,
                 Messages,
                 Attachments,
-                Personas
+                Personas,
+                Artifacts
             )
         }
     }

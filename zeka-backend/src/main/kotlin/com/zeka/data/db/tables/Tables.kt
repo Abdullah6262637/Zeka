@@ -62,3 +62,11 @@ object Personas : UUIDTable("personas") {
     val topP = double("top_p").default(0.9)
     val maxTokens = integer("max_tokens").default(2048)
 }
+
+object Artifacts : UUIDTable("artifacts") {
+    val sessionId = varchar("session_id", 100)
+    val type = varchar("type", 50)
+    val title = varchar("title", 255)
+    val content = text("content")
+    val createdAt = datetime("created_at").default(LocalDateTime.now())
+}

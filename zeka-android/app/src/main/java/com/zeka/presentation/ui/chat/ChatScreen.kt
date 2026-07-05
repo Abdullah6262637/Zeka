@@ -39,6 +39,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.window.Dialog
 import androidx.compose.runtime.collectAsState
+import kotlinx.serialization.json.*
 import android.widget.Toast
 import java.util.UUID
 import kotlinx.coroutines.launch
@@ -46,6 +47,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -103,6 +106,7 @@ fun ChatScreen(
     var selectedWorkspaceName by remember { mutableStateOf<String?>(null) }
     var selectedWorkspacePath by remember { mutableStateOf<String?>(null) }
     var showWorkspaceDialog by remember { mutableStateOf(false) }
+    var activeCodeTab by remember { mutableStateOf("Konsol") }
 
     val agentSession by viewModel.agentSession.collectAsState()
     val isAgentRunning by viewModel.isAgentRunning.collectAsState()
@@ -406,18 +410,62 @@ fun ChatScreen(
 
                         // Main Content Area
                         if (isCodeMode && agentSession != null) {
-                            Box(
+                            val artifacts by viewModel.agentArtifacts.collectAsState()
+                            Column(
                                 modifier = Modifier
                                     .weight(1f)
                                     .fillMaxWidth()
                             ) {
-                                AgentTerminalPanel(
-                                    session = agentSession!!,
-                                    isRunning = isAgentRunning,
-                                    onApproveNextStep = {
-                                        viewModel.executeNextAgentStep("mock-jwt-token")
+                                // Monokrom Tab Selector
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(PureBlack)
+                                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(20.dp)
+                                ) {
+                                    listOf("Konsol", "Çıktılar").forEach { tab ->
+                                        val active = activeCodeTab == tab
+                                        Text(
+                                            text = tab,
+                                            color = if (active) Color(0xFF00FFCC) else OffWhite.copy(alpha = 0.5f),
+                                            fontWeight = FontWeight.Bold,
+                                            fontFamily = SpaceGroteskFontFamily,
+                                            fontSize = 13.sp,
+                                            modifier = Modifier
+                                                .clickable { activeCodeTab = tab }
+                                                .padding(vertical = 6.dp)
+                                                .drawBehind {
+                                                    if (active) {
+                                                        drawLine(
+                                                            color = Color(0xFF00FFCC),
+                                                            start = Offset(0f, size.height),
+                                                            end = Offset(size.width, size.height),
+                                                            strokeWidth = 2.dp.toPx()
+                                                        )
+                                                    }
+                                                }
+                                        )
                                     }
-                                )
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
+                                ) {
+                                    if (activeCodeTab == "Konsol") {
+                                        AgentTerminalPanel(
+                                            session = agentSession!!,
+                                            isRunning = isAgentRunning,
+                                            onApproveNextStep = {
+                                                viewModel.executeNextAgentStep("mock-jwt-token")
+                                            }
+                                        )
+                                    } else {
+                                        AgentArtifactsPanel(artifacts = artifacts)
+                                    }
+                                }
                             }
                         } else {
                             // Chat Messages list
@@ -3437,9 +3485,258 @@ fun AgentTerminalPanel(
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp
                         )
+                }
+            }
+        }
+    }
+}
+}
+
+@Composable
+fun AgentArtifactsPanel(
+    artifacts: List<com.zeka.presentation.viewmodel.AgentArtifact>,
+    modifier: Modifier = Modifier
+) {
+    if (artifacts.isEmpty()) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(PureBlack),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Henüz çıktı üretilmedi.",
+                color = OffWhite.copy(alpha = 0.5f),
+                fontFamily = SpaceGroteskFontFamily,
+                fontSize = 14.sp
+            )
+        }
+    } else {
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .background(PureBlack)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(
+                items = artifacts,
+                key = { it.id }
+            ) { artifact ->
+                when (artifact.type) {
+                    "plan" -> PlanChecklistCard(artifact = artifact)
+                    "diff" -> DiffViewerCard(artifact = artifact)
+                    else -> DefaultArtifactCard(artifact = artifact)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PlanChecklistCard(
+    artifact: com.zeka.presentation.viewmodel.AgentArtifact,
+    modifier: Modifier = Modifier
+) {
+    val tasks: List<String> = remember(artifact.content) {
+        try {
+            val json = Json.parseToJsonElement(artifact.content).jsonObject
+            val array = json["tasks"]?.jsonArray
+            array?.mapIndexed { index, element ->
+                val obj = element.jsonObject
+                obj["title"]?.jsonPrimitive?.content ?: "Adım $index"
+            } ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Graphite.copy(alpha = 0.5f))
+            .border(1.5.dp, DividerColor, RoundedCornerShape(12.dp))
+            .padding(16.dp)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "GÖREV PLANI",
+                    color = Color(0xFF00FFCC),
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = SpaceGroteskFontFamily,
+                    fontSize = 12.sp
+                )
+                Text(
+                    text = artifact.createdAt,
+                    color = OffWhite.copy(alpha = 0.4f),
+                    fontFamily = SpaceGroteskFontFamily,
+                    fontSize = 10.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            for (taskTitle in tasks) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Done",
+                        tint = Color(0xFF00FF99),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = taskTitle,
+                        color = OffWhite.copy(alpha = 0.9f),
+                        fontFamily = SpaceGroteskFontFamily,
+                        fontSize = 13.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DiffViewerCard(
+    artifact: com.zeka.presentation.viewmodel.AgentArtifact,
+    modifier: Modifier = Modifier
+) {
+    val lines = remember(artifact.content) { artifact.content.split("\n") }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Graphite.copy(alpha = 0.5f))
+            .border(1.5.dp, DividerColor, RoundedCornerShape(12.dp))
+            .padding(16.dp)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = artifact.title,
+                    color = Color(0xFF8A2BE2),
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = SpaceGroteskFontFamily,
+                    fontSize = 12.sp
+                )
+                Text(
+                    text = artifact.createdAt,
+                    color = OffWhite.copy(alpha = 0.4f),
+                    fontFamily = SpaceGroteskFontFamily,
+                    fontSize = 10.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0xFF0D0D0D))
+                    .border(1.5.dp, DividerColor, RoundedCornerShape(8.dp))
+                    .padding(8.dp)
+                    .horizontalScroll(rememberScrollState())
+            ) {
+                Column {
+                    lines.forEach { line ->
+                        val isAddition = line.startsWith("+") && !line.startsWith("+++")
+                        val isDeletion = line.startsWith("-") && !line.startsWith("---")
+                        val isHeader = line.startsWith("@@") || line.startsWith("diff")
+
+                        val bgColor = when {
+                            isAddition -> Color(0xFF00FF99).copy(alpha = 0.12f)
+                            isDeletion -> Color(0xFFFF3366).copy(alpha = 0.12f)
+                            isHeader -> Color(0xFF0099FF).copy(alpha = 0.08f)
+                            else -> Color.Transparent
+                        }
+
+                        val textColor = when {
+                            isAddition -> Color(0xFF00FF99)
+                            isDeletion -> Color(0xFFFF3366)
+                            isHeader -> Color(0xFF0099FF)
+                            else -> OffWhite.copy(alpha = 0.7f)
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(bgColor)
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = line,
+                                color = textColor,
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 11.sp
+                            )
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun DefaultArtifactCard(
+    artifact: com.zeka.presentation.viewmodel.AgentArtifact,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Graphite.copy(alpha = 0.5f))
+            .border(1.5.dp, DividerColor, RoundedCornerShape(12.dp))
+            .padding(16.dp)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = artifact.title,
+                    color = OffWhite,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = SpaceGroteskFontFamily,
+                    fontSize = 12.sp
+                )
+                Text(
+                    text = artifact.createdAt,
+                    color = OffWhite.copy(alpha = 0.4f),
+                    fontFamily = SpaceGroteskFontFamily,
+                    fontSize = 10.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = artifact.content,
+                color = OffWhite.copy(alpha = 0.7f),
+                fontFamily = FontFamily.Monospace,
+                fontSize = 11.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF0D0D0D))
+                    .padding(8.dp)
+            )
         }
     }
 }
