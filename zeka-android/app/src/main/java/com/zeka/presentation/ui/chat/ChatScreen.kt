@@ -107,6 +107,7 @@ fun ChatScreen(
     var selectedWorkspacePath by remember { mutableStateOf<String?>(null) }
     var showWorkspaceDialog by remember { mutableStateOf(false) }
     var activeCodeTab by remember { mutableStateOf("Konsol") }
+    var activeSkillTag by remember { mutableStateOf<String?>(null) }
 
     val agentSession by viewModel.agentSession.collectAsState()
     val isAgentRunning by viewModel.isAgentRunning.collectAsState()
@@ -355,23 +356,7 @@ fun ChatScreen(
                             }
                         }
 
-                        // Mode Switcher Control Row
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            SegmentedModeSelector(
-                                isCodeMode = isCodeMode,
-                                onModeChanged = { codeMode ->
-                                    isCodeMode = codeMode
-                                    if (codeMode && selectedWorkspacePath == null) {
-                                        showWorkspaceDialog = true
-                                    }
-                                }
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
 
                         // Active Workspace & Quota Info Panel
                         if (isCodeMode && selectedWorkspaceName != null) {
@@ -578,68 +563,99 @@ fun ChatScreen(
                             }
                         }
 
+                        // Skills Suggestion List (Pops up when typing '/')
+                        val configuredSkills = remember { com.zeka.data.local.model.ConfiguredSkillStore.loadSkills(context) }
+                        val showSkillsSuggestions = textState.startsWith("/")
+                        val suggestionQuery = if (showSkillsSuggestions) textState.substring(1) else ""
+                        val filteredSkills = configuredSkills.filter {
+                            it.name.contains(suggestionQuery, ignoreCase = true) ||
+                            it.triggerKeyword.contains(suggestionQuery, ignoreCase = true)
+                        }
+
+                        if (showSkillsSuggestions && filteredSkills.isNotEmpty()) {
+                            SkillsSuggestionPopup(
+                                skills = filteredSkills,
+                                onSkillSelected = { skill ->
+                                    activeSkillTag = skill.name
+                                    textState = "" // Clear input field after suggestion select
+                                }
+                            )
+                        }
+
                         // Input Bar Area
-                            ChatInputBar(
-                                textValue = textState,
-                                onValueChange = { textState = it },
-                                isAttachmentMenuOpen = isAttachmentMenuOpen,
-                                onAttachmentMenuToggle = { isAttachmentMenuOpen = it },
-                                onPhotoSelect = {
-                                    selectedAttachment = Attachment(
-                                        name = "Zeka_Mock_Image.png",
-                                        size = "1.4 MB",
-                                        type = "PNG"
-                                    )
-                                },
-                                onPdfSelect = {
-                                    selectedAttachment = Attachment(
-                                        name = "Kullanıcı_Belgesi.pdf",
-                                        size = "840 KB",
-                                        type = "PDF"
-                                    )
-                                },
-                                onAddPluginClick = { activeCatalogMode = "plugin" },
-                                onAddSkillClick = { activeCatalogMode = "skill" },
-                                onAddMcpClick = { activeCatalogMode = "mcp" },
-                                onSendClick = {
-                                    if (selectedModel == "None") {
-                                        Toast.makeText(context, "Lütfen ayarlardan bir model sağlayıcı ekleyin ve model seçin.", Toast.LENGTH_LONG).show()
-                                    } else {
-                                        if (textState.isNotBlank() || selectedAttachment != null) {
-                                            val prompt = textState
-                                            val attachment = selectedAttachment
-                                            textState = ""
-                                            selectedAttachment = null
+                        ChatInputBar(
+                            textValue = textState,
+                            onValueChange = { textState = it },
+                            isAttachmentMenuOpen = isAttachmentMenuOpen,
+                            onAttachmentMenuToggle = { isAttachmentMenuOpen = it },
+                            isCodeMode = isCodeMode,
+                            onCodeModeToggle = {
+                                val targetMode = !isCodeMode
+                                isCodeMode = targetMode
+                                if (targetMode && selectedWorkspacePath == null) {
+                                    showWorkspaceDialog = true
+                                }
+                            },
+                            activeSkillTag = activeSkillTag,
+                            onRemoveSkillTag = { activeSkillTag = null },
+                            onPhotoSelect = {
+                                selectedAttachment = Attachment(
+                                    name = "Zeka_Mock_Image.png",
+                                    size = "1.4 MB",
+                                    type = "PNG"
+                                )
+                            },
+                            onPdfSelect = {
+                                selectedAttachment = Attachment(
+                                    name = "Kullanıcı_Belgesi.pdf",
+                                    size = "840 KB",
+                                    type = "PDF"
+                                )
+                            },
+                            onAddPluginClick = { activeCatalogMode = "plugin" },
+                            onAddSkillClick = { activeCatalogMode = "skill" },
+                            onAddMcpClick = { activeCatalogMode = "mcp" },
+                            onSendClick = {
+                                if (selectedModel == "None") {
+                                    Toast.makeText(context, "Lütfen ayarlardan bir model sağlayıcı ekleyin ve model seçin.", Toast.LENGTH_LONG).show()
+                                } else {
+                                    if (textState.isNotBlank() || selectedAttachment != null || activeSkillTag != null) {
+                                        val skillTag = activeSkillTag
+                                        val prompt = if (skillTag != null) "/${skillTag.lowercase()} $textState" else textState
+                                        val attachment = selectedAttachment
+                                        textState = ""
+                                        selectedAttachment = null
+                                        activeSkillTag = null
 
-                                            val addedModels = com.zeka.data.local.model.ConfiguredModelStore.loadModels(context)
-                                            val matchedModel = addedModels.find { it.name == selectedModel }
-                                            val activeProvider = matchedModel?.provider?.lowercase() ?: "anthropic"
-                                            val activeModelName = matchedModel?.name ?: "claude-3-5-sonnet"
+                                        val addedModels = com.zeka.data.local.model.ConfiguredModelStore.loadModels(context)
+                                        val matchedModel = addedModels.find { it.name == selectedModel }
+                                        val activeProvider = matchedModel?.provider?.lowercase() ?: "anthropic"
+                                        val activeModelName = matchedModel?.name ?: "claude-3-5-sonnet"
 
-                                            if (isCodeMode) {
-                                                viewModel.startAgentSession(
-                                                    authToken = "mock-jwt-token",
-                                                    workspaceId = "Abdullah6262637-zeka",
-                                                    hostPath = selectedWorkspacePath ?: "c:\\Users\\HP\\Desktop\\Zeka",
-                                                    prompt = prompt,
-                                                    provider = activeProvider,
-                                                    modelName = activeModelName
-                                                )
-                                            } else {
-                                                viewModel.sendMessageStream(
-                                                    context = context,
-                                                    conversationId = currentConversationId,
-                                                    provider = activeProvider,
-                                                    model = activeModelName,
-                                                    prompt = prompt,
-                                                    authToken = "mock-jwt-token",
-                                                    attachment = attachment
-                                                )
-                                            }
+                                        if (isCodeMode) {
+                                            viewModel.startAgentSession(
+                                                authToken = "mock-jwt-token",
+                                                workspaceId = "Abdullah6262637-zeka",
+                                                hostPath = selectedWorkspacePath ?: "c:\\Users\\HP\\Desktop\\Zeka",
+                                                prompt = prompt,
+                                                provider = activeProvider,
+                                                modelName = activeModelName
+                                            )
+                                        } else {
+                                            viewModel.sendMessageStream(
+                                                context = context,
+                                                conversationId = currentConversationId,
+                                                provider = activeProvider,
+                                                model = activeModelName,
+                                                prompt = prompt,
+                                                authToken = "mock-jwt-token",
+                                                attachment = attachment
+                                            )
                                         }
                                     }
                                 }
-                            )
+                            }
+                        )
                         }
 
                         // Animated Catalog Overlay Screen
@@ -1536,6 +1552,10 @@ fun ChatInputBar(
     onValueChange: (String) -> Unit,
     isAttachmentMenuOpen: Boolean,
     onAttachmentMenuToggle: (Boolean) -> Unit,
+    isCodeMode: Boolean,
+    onCodeModeToggle: () -> Unit,
+    activeSkillTag: String?,
+    onRemoveSkillTag: () -> Unit,
     onPhotoSelect: () -> Unit,
     onPdfSelect: () -> Unit,
     onAddPluginClick: () -> Unit,
@@ -1652,9 +1672,75 @@ fun ChatInputBar(
                             .clip(CircleShape)
                             .background(Graphite)
                             .border(1.dp, DividerColor, CircleShape)
-                            .padding(horizontal = 16.dp),
+                            .padding(horizontal = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // A. Code Mode Toggle in the Corner
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { onCodeModeToggle() }
+                                .padding(vertical = 6.dp, horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Sharp.Code,
+                                contentDescription = "Code Mode Toggle",
+                                tint = if (isCodeMode) Color(0xFF00FFCC) else MidGray,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            if (isCodeMode) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "KOD",
+                                    color = Color(0xFF00FFCC),
+                                    fontFamily = SpaceGroteskFontFamily,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(4.dp))
+
+                        // B. Active Skill Tag Capsule
+                        if (activeSkillTag != null) {
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFF161616))
+                                    .border(1.dp, Color(0xFF00FFCC).copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Sharp.AutoAwesome,
+                                    contentDescription = "Active Skill",
+                                    tint = Color(0xFF00FFCC),
+                                    modifier = Modifier.size(10.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = activeSkillTag.lowercase(),
+                                    color = OffWhite,
+                                    fontFamily = SpaceGroteskFontFamily,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.sp
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Remove",
+                                    tint = MidGray,
+                                    modifier = Modifier
+                                        .size(12.dp)
+                                        .clickable { onRemoveSkillTag() }
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+
+                        // C. Input text field
                         BasicTextField(
                             value = textValue,
                             onValueChange = onValueChange,
@@ -1668,7 +1754,7 @@ fun ChatInputBar(
                             decorationBox = { innerTextField ->
                                 if (textValue.isEmpty()) {
                                     Text(
-                                        text = "Mesajınızı yazın...",
+                                        text = if (activeSkillTag != null) "" else "Mesajınızı yazın...",
                                         color = MidGray,
                                         fontFamily = InterFontFamily,
                                         fontSize = 14.sp
@@ -2583,30 +2669,32 @@ fun CatalogCard(
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Logo / Icon Container
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .clip(CircleShape)
-                .background(if (logoRes != null) OffWhite else PureBlack)
-                .border(1.dp, DividerColor, CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            if (logoRes != null) {
+        if (logoRes != null) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(OffWhite)
+                    .border(1.dp, DividerColor, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
                 Image(
                     painter = painterResource(id = logoRes),
                     contentDescription = title,
                     modifier = Modifier
-                        .size(24.dp)
+                        .size(20.dp)
                         .clip(CircleShape)
                 )
-            } else if (logoIcon != null) {
-                Icon(
-                    imageVector = logoIcon,
-                    contentDescription = title,
-                    tint = OffWhite,
-                    modifier = Modifier.size(20.dp)
-                )
             }
+            Spacer(modifier = Modifier.width(12.dp))
+        } else if (logoIcon != null) {
+            Icon(
+                imageVector = logoIcon,
+                contentDescription = title,
+                tint = Color(0xFF00FFCC),
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
         }
 
         Spacer(modifier = Modifier.width(12.dp))
@@ -3927,6 +4015,66 @@ fun McpConsentDialog(
                             fontWeight = FontWeight.Bold,
                             fontFamily = SpaceGroteskFontFamily,
                             fontSize = 13.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SkillsSuggestionPopup(
+    skills: List<com.zeka.data.local.model.ConfiguredSkill>,
+    onSkillSelected: (com.zeka.data.local.model.ConfiguredSkill) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFF0D0D0D))
+            .border(1.dp, DividerColor, RoundedCornerShape(12.dp))
+            .padding(8.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = "YETENEKLER (SKILLS)",
+                color = MidGray,
+                fontFamily = SpaceGroteskFontFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = 10.sp,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            )
+            for (skill in skills) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onSkillSelected(skill) }
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Sharp.AutoAwesome,
+                        contentDescription = "Skill",
+                        tint = Color(0xFF00FFCC),
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = "/${skill.name.lowercase()}",
+                            color = OffWhite,
+                            fontFamily = SpaceGroteskFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                        Text(
+                            text = if (skill.promptInstruction.length > 60) skill.promptInstruction.take(60) + "..." else skill.promptInstruction,
+                            color = MidGray,
+                            fontFamily = SpaceGroteskFontFamily,
+                            fontSize = 10.sp
                         )
                     }
                 }

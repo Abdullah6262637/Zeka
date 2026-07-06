@@ -223,9 +223,13 @@ class ChatViewModel : ViewModel() {
             // A. Custom Skills Processing
             val skillsList = com.zeka.data.local.model.ConfiguredSkillStore.loadSkills(context)
             for (skill in skillsList) {
-                if (prompt.contains(skill.triggerKeyword, ignoreCase = true)) {
+                val slashCmd = "/${skill.name.lowercase()}"
+                if (prompt.contains(skill.triggerKeyword, ignoreCase = true) || prompt.startsWith(slashCmd, ignoreCase = true)) {
                     skillSystemInstruction = skill.promptInstruction
-                    finalPrompt = finalPrompt.replace(skill.triggerKeyword, "", ignoreCase = true).trim()
+                    finalPrompt = finalPrompt
+                        .replace(skill.triggerKeyword, "", ignoreCase = true)
+                        .replace(slashCmd, "", ignoreCase = true)
+                        .trim()
                     break
                 }
             }
