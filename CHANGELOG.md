@@ -6,6 +6,17 @@ Projenin sürüm yönetimi [SemVer](https://semver.org/spec/v2.0.0.html) (Semant
 
 ---
 
+## [1.5.0-Phase5] - 2026-07-06
+
+### Eklendi
+- **Eklenti (.zpack) & JS Sandbox Orkestrasyonu (Backend):**
+  - **Eklenti Yükleyici:** ZIP sıkıştırılmış eklenti paketlerini parse edip `.agents/plugins/` dizinine çıkaran ve etkinleştiren `PluginManager` geliştirildi.
+  - **JavaScript Sandbox Yorumlayıcı:** Eklenti veya yetenek betiklerini Docker node sandbox konteyneri içinde izole parametrelerle çalıştıran `JsSandboxExecutor` entegre edildi.
+  - **Uç Noktalar:** `/install`, `/plugins` listeleme ve durum güncelleme API rotaları `AgentRoutes` altına eklendi.
+- **Canlı Tool UX & MCP Onay Akışı (Android):**
+  - **McpConsentDialog:** Ajan yerel rehbere veya takvime erişmeye çalıştığında açılan, onay veya red yetkisi sunan premium AMOLED siyah & neon yeşil arayüz penceresi.
+  - **Canlı Tool Çipleri:** Giriş alanının üstünde konumlanan, aktif aracın durumuna göre pulsing neon border animasyonlu visual live tool indicator.
+
 ## [1.4.0-Phase4] - 2026-07-06
 
 ### Eklendi
