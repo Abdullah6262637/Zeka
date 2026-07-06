@@ -14,12 +14,14 @@ Projenin sürüm yönetimi [SemVer](https://semver.org/spec/v2.0.0.html) (Semant
   - **JavaScript Sandbox Yorumlayıcı:** Eklenti veya yetenek betiklerini Docker node sandbox konteyneri içinde izole parametrelerle çalıştıran `JsSandboxExecutor` entegre edildi.
   - **Uç Noktalar:** `/install`, `/plugins` listeleme ve durum güncelleme API rotaları `AgentRoutes` altına eklendi.
 - **Gelişmiş Arayüz (UI/UX) & MCP Onay Akışı (Android):**
-  - **Mesaj Kutusuna Entegre Kod Modu:** Kod Modu seçici kontrolü üst menüden kaldırılarak mesaj yazma kutusunun (capsule) sol köşesine yerleştirildi. Aktif edildiğinde temaya uygun yeşil `Icons.Sharp.Code` simgesi ve mini bir `KOD` rozeti belirir.
+  - **Mesaj Kutusuna Entegre Kod Modu:** Kod Modu seçici kontrolü üst menüden kaldırılarak mesaj yazma kutusunun (capsule) sol köşesine yerleştirildi. Aktif edildiğinde temaya uygun gri/beyaz `Icons.Sharp.Code` simgesi ve mini bir `KOD` rozeti belirir.
   - **Slash Suggester (Yetenek Listesi):** Kullanıcı mesaj alanına `/` (slash) karakterini girdiğinde, kayıtlı tüm yetenekleri listeleyen ve filtreleyen premium monokrom `SkillsSuggestionPopup` açılır.
   - **Aktif Yetenek Kapsülü:** Bir yetenek seçildiğinde mesaj yazma alanının içinde şık bir active skill kapsülü (`[ ⚡ skill_name ]`) belirir ve gönderilen mesaja o yeteneğin prompt yönergeleri otomatik eklenir.
+  - **Yenilenen Kota & Workspace Kartı:** Çalışma alanı ve kota kartı, ekranın ortasında yer kaplamayacak ve metin taşması yapmayacak şekilde `3 kolonlu` grid/tag düzenine dönüştürüldü.
+  - **Monokrom Tema Optimizasyonu:** Uygulamadaki tüm neon yeşil arayüz renkleri, saf siyah AMOLED temayla uyumlu monokrom gri ve beyaz tonlarıyla değiştirildi (ikonlar, butonlar, diyalog çerçeveleri ve tablolar dahil).
   - **Logosuz Kartlar:** Eklenti ve yetenek kartları gereksiz logo resimlerinden arındırılarak minimalist monokrom sistem simgeleriyle optimize edildi.
-  - **McpConsentDialog:** Ajan yerel rehbere veya takvime erişmeye çalıştığında açılan, onay veya red yetkisi sunan premium AMOLED siyah & neon yeşil arayüz penceresi.
-  - **Canlı Tool Çipleri:** Giriş alanının üstünde konumlanan, aktif aracın durumuna göre pulsing neon border animasyonlu visual live tool indicator.
+  - **McpConsentDialog:** Ajan yerel rehbere veya takvime erişmeye çalıştığında açılan, onay veya red yetkisi sunan premium AMOLED siyah & beyaz arayüz penceresi.
+  - **Canlı Tool Çipleri:** Giriş alanının üstünde konumlanan, aktif aracın durumuna göre pulsing border animasyonlu visual live tool indicator.
 
 ## [1.4.0-Phase4] - 2026-07-06
 
