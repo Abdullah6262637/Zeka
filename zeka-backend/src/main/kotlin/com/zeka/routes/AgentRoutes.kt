@@ -5,6 +5,7 @@ import com.zeka.llm.ProviderRouter
 import com.zeka.sandbox.AgentLoopManager
 import com.zeka.sandbox.DockerSandboxManager
 import io.ktor.http.*
+import io.ktor.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
@@ -127,6 +128,53 @@ fun Route.agentRoutes() {
 
                 DockerSandboxManager.stopSandbox(session.workspaceId)
                 call.respond(mapOf("status" to "stopped"))
+            }
+
+            post("/plugins/install") {
+                val multipart = call.receiveMultipart()
+                var workspacePath = ""
+                var fileBytes: ByteArray? = null
+                multipart.forEachPart { part ->
+                    when (part) {
+                        is PartData.FormItem -> {
+                            if (part.name == "workspacePath") {
+                                workspacePath = part.value
+                            }
+                        }
+                        is PartData.FileItem -> {
+                            fileBytes = part.streamProvider().readBytes()
+                        }
+                        else -> {}
+                    }
+                    part.dispose()
+                }
+
+                if (workspacePath.isEmpty() || fileBytes == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "workspacePath and file are required"))
+                    return@post
+                }
+
+                val plugin = com.zeka.sandbox.PluginManager.installPlugin(fileBytes!!.inputStream(), workspacePath)
+                if (plugin == null) {
+                    call.respond(HttpStatusCode.InternalServerError, mapOf("error" to "Failed to install plugin"))
+                } else {
+                    call.respond(plugin)
+                }
+            }
+
+            get("/plugins") {
+                call.respond(com.zeka.sandbox.PluginManager.listPlugins())
+            }
+
+            post("/plugins/{pluginId}/toggle") {
+                val pluginId = call.parameters["pluginId"] ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Plugin ID is required"))
+                val active = call.receive<Map<String, Boolean>>()["active"] ?: true
+                val success = com.zeka.sandbox.PluginManager.togglePlugin(pluginId, active)
+                if (success) {
+                    call.respond(mapOf("status" to "success"))
+                } else {
+                    call.respond(HttpStatusCode.NotFound, mapOf("error" to "Plugin not found"))
+                }
             }
         }
     }

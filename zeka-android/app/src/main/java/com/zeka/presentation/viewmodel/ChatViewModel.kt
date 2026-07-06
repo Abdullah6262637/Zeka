@@ -29,6 +29,9 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import java.util.UUID
 
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.StateFlow
+
 @Serializable
 data class ChatStreamRequest(
     val conversationId: String,
@@ -37,6 +40,12 @@ data class ChatStreamRequest(
     val message: String,
     val systemPrompt: String? = null,
     val temperature: Double = 0.7
+)
+
+data class McpConsentRequest(
+    val toolName: String,
+    val description: String,
+    val deferred: CompletableDeferred<Boolean>
 )
 
 class ChatViewModel : ViewModel() {
@@ -57,6 +66,19 @@ class ChatViewModel : ViewModel() {
 
     private val _toolStatus = MutableStateFlow<String?>(null)
     val toolStatus = _toolStatus.asStateFlow()
+
+    private val _mcpConsentRequest = MutableStateFlow<McpConsentRequest?>(null)
+    val mcpConsentRequest = _mcpConsentRequest.asStateFlow()
+
+    fun approveMcpRequest() {
+        _mcpConsentRequest.value?.deferred?.complete(true)
+        _mcpConsentRequest.value = null
+    }
+
+    fun denyMcpRequest() {
+        _mcpConsentRequest.value?.deferred?.complete(false)
+        _mcpConsentRequest.value = null
+    }
 
     private val _errorFlow = MutableStateFlow<String?>(null)
     val errorFlow = _errorFlow.asStateFlow()
@@ -212,23 +234,43 @@ class ChatViewModel : ViewModel() {
             val lowerPrompt = finalPrompt.lowercase()
             if (lowerPrompt.contains("takvim") || lowerPrompt.contains("etkinlik") || lowerPrompt.contains("calendar")) {
                 _toolStatus.value = "Yerel Takvim Okunuyor..."
-                kotlinx.coroutines.delay(1200)
-                val calData = com.zeka.data.local.mcp.LocalMcpEngine.readCalendarEvents(context)
-                finalPrompt = "[Yerel MCP Araç Çıktısı - Takvim]:\n$calData\n\nKullanıcı Sorusu:\n$finalPrompt"
+                val deferred = kotlinx.coroutines.CompletableDeferred<Boolean>()
+                _mcpConsentRequest.value = McpConsentRequest(
+                    toolName = "Takvim Okuyucu",
+                    description = "Ajan bugünkü takvim etkinliklerinizi okumak istiyor.",
+                    deferred = deferred
+                )
+                val approved = deferred.await()
+                if (approved) {
+                    val calData = com.zeka.data.local.mcp.LocalMcpEngine.readCalendarEvents(context)
+                    finalPrompt = "[Yerel MCP Araç Çıktısı - Takvim]:\n$calData\n\nKullanıcı Sorusu:\n$finalPrompt"
+                } else {
+                    finalPrompt = "[Yerel MCP Araç Çıktısı - Takvim]: HATA: Kullanıcı takvime erişim iznini reddetti.\n\nKullanıcı Sorusu:\n$finalPrompt"
+                }
                 _toolStatus.value = null
             } else if (lowerPrompt.contains("rehber") || lowerPrompt.contains("kişi") || lowerPrompt.contains("contacts")) {
                 _toolStatus.value = "Cihaz Rehberi Sorgulanıyor..."
-                kotlinx.coroutines.delay(1200)
-                var searchName: String? = null
-                val words = finalPrompt.split(" ", "'", "\"")
-                for (word in words) {
-                    if (word.length > 2 && word != "rehber" && word != "rehberden" && word != "kişi" && word != "bul" && word != "ara") {
-                        searchName = word
-                        break
+                val deferred = kotlinx.coroutines.CompletableDeferred<Boolean>()
+                _mcpConsentRequest.value = McpConsentRequest(
+                    toolName = "Rehber Okuyucu",
+                    description = "Ajan cihaz rehberinizdeki kayıtları okumak istiyor.",
+                    deferred = deferred
+                )
+                val approved = deferred.await()
+                if (approved) {
+                    var searchName: String? = null
+                    val words = finalPrompt.split(" ", "'", "\"")
+                    for (word in words) {
+                        if (word.length > 2 && word != "rehber" && word != "rehberden" && word != "kişi" && word != "bul" && word != "ara") {
+                            searchName = word
+                            break
+                        }
                     }
+                    val contactsData = com.zeka.data.local.mcp.LocalMcpEngine.readContacts(context, searchName)
+                    finalPrompt = "[Yerel MCP Araç Çıktısı - Rehber]:\n$contactsData\n\nKullanıcı Sorusu:\n$finalPrompt"
+                } else {
+                    finalPrompt = "[Yerel MCP Araç Çıktısı - Rehber]: HATA: Kullanıcı rehbere erişim iznini reddetti.\n\nKullanıcı Sorusu:\n$finalPrompt"
                 }
-                val contactsData = com.zeka.data.local.mcp.LocalMcpEngine.readContacts(context, searchName)
-                finalPrompt = "[Yerel MCP Araç Çıktısı - Rehber]:\n$contactsData\n\nKullanıcı Sorusu:\n$finalPrompt"
                 _toolStatus.value = null
             }
 

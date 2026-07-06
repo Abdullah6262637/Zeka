@@ -110,6 +110,7 @@ fun ChatScreen(
 
     val agentSession by viewModel.agentSession.collectAsState()
     val isAgentRunning by viewModel.isAgentRunning.collectAsState()
+    val mcpConsentRequest by viewModel.mcpConsentRequest.collectAsState()
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -537,18 +538,32 @@ fun ChatScreen(
                             // Active Local MCP Tool indicator
                             val toolStatus by viewModel.toolStatus.collectAsState()
                             if (toolStatus != null) {
+                                val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+                                val borderAlpha by infiniteTransition.animateFloat(
+                                    initialValue = 0.3f,
+                                    targetValue = 1.0f,
+                                    animationSpec = infiniteRepeatable(
+                                        animation = tween(1000, easing = LinearEasing),
+                                        repeatMode = RepeatMode.Reverse
+                                    ),
+                                    label = "borderAlpha"
+                                )
                                 Row(
                                     modifier = Modifier
-                                        .padding(horizontal = 24.dp, vertical = 6.dp)
+                                        .padding(horizontal = 24.dp, vertical = 8.dp)
                                         .clip(RoundedCornerShape(20.dp))
-                                        .background(Graphite)
-                                        .border(1.dp, DividerColor, RoundedCornerShape(20.dp))
+                                        .background(Color(0xFF0D0D0D))
+                                        .border(
+                                            width = 1.2.dp,
+                                            color = Color(0xFF00FFCC).copy(alpha = borderAlpha),
+                                            shape = RoundedCornerShape(20.dp)
+                                        )
                                         .padding(horizontal = 14.dp, vertical = 8.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     CircularProgressIndicator(
                                         modifier = Modifier.size(12.dp),
-                                        color = OffWhite,
+                                        color = Color(0xFF00FFCC),
                                         strokeWidth = 1.5.dp
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
@@ -1159,6 +1174,15 @@ fun ChatScreen(
                 onDismiss = { showAddPluginDialog = false },
                 context = context
             )
+
+            mcpConsentRequest?.let { request ->
+                McpConsentDialog(
+                    toolName = request.toolName,
+                    description = request.description,
+                    onApprove = { viewModel.approveMcpRequest() },
+                    onDeny = { viewModel.denyMcpRequest() }
+                )
+            }
         }
     }
 }
@@ -3825,6 +3849,88 @@ fun DefaultArtifactCard(
                     .background(Color(0xFF0D0D0D))
                     .padding(8.dp)
             )
+        }
+    }
+}
+
+@Composable
+fun McpConsentDialog(
+    toolName: String,
+    description: String,
+    onApprove: () -> Unit,
+    onDeny: () -> Unit
+) {
+    androidx.compose.ui.window.Dialog(
+        onDismissRequest = onDeny
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(PureBlack)
+                .border(2.dp, Color(0xFF00FFCC), RoundedCornerShape(16.dp))
+                .padding(24.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = androidx.compose.material.icons.Icons.Default.Lock,
+                    contentDescription = "MCP Uyarısı",
+                    tint = Color(0xFF00FFCC),
+                    modifier = Modifier.size(40.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "MCP Erişim Talebi",
+                    color = OffWhite,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = SpaceGroteskFontFamily,
+                    fontSize = 18.sp,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "$toolName: $description",
+                    color = OffWhite.copy(alpha = 0.8f),
+                    fontFamily = SpaceGroteskFontFamily,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = onDeny,
+                        colors = ButtonDefaults.buttonColors(containerColor = Graphite),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = "Reddet",
+                            color = OffWhite,
+                            fontFamily = SpaceGroteskFontFamily,
+                            fontSize = 13.sp
+                        )
+                    }
+                    Button(
+                        onClick = onApprove,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00FFCC)),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = "İzin Ver",
+                            color = PureBlack,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = SpaceGroteskFontFamily,
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            }
         }
     }
 }
