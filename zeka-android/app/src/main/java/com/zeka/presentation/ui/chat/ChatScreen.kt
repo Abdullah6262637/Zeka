@@ -364,34 +364,41 @@ fun ChatScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp, vertical = 4.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(Graphite.copy(alpha = 0.4f))
-                                    .border(1.dp, DividerColor, RoundedCornerShape(12.dp))
-                                    .padding(12.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Graphite.copy(alpha = 0.2f))
+                                    .border(1.dp, DividerColor, RoundedCornerShape(8.dp))
+                                    .padding(10.dp)
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
                                         Icon(
                                             imageVector = Icons.Outlined.Folder,
                                             contentDescription = "Workspace",
-                                            tint = Color(0xFF00FFCC),
+                                            tint = OffWhite,
                                             modifier = Modifier.size(14.dp)
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
-                                            text = "Çalışma Alanı: $selectedWorkspaceName",
-                                            color = Color(0xFF00FFCC),
+                                            text = selectedWorkspaceName!!,
+                                            color = OffWhite,
                                             fontFamily = SpaceGroteskFontFamily,
-                                            fontSize = 11.sp
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 11.sp,
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                         )
                                     }
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = "Değiştir",
-                                        color = OffWhite.copy(alpha = 0.5f),
+                                        color = OffWhite.copy(alpha = 0.6f),
                                         fontWeight = FontWeight.Bold,
                                         fontFamily = SpaceGroteskFontFamily,
                                         fontSize = 11.sp,
@@ -399,29 +406,66 @@ fun ChatScreen(
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(1.dp)
+                                        .background(DividerColor)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Text(
-                                        text = "Kalan Token: 49,850 / 50,000",
-                                        color = OffWhite.copy(alpha = 0.4f),
-                                        fontFamily = SpaceGroteskFontFamily,
-                                        fontSize = 10.sp
-                                    )
-                                    Text(
-                                        text = "Kalan CPU: 3,595 / 3,600 sn",
-                                        color = OffWhite.copy(alpha = 0.4f),
-                                        fontFamily = SpaceGroteskFontFamily,
-                                        fontSize = 10.sp
-                                    )
-                                    Text(
-                                        text = "Hafıza: Aktif (2 Kayıt)",
-                                        color = Color(0xFF00FF99),
-                                        fontWeight = FontWeight.Bold,
-                                        fontFamily = SpaceGroteskFontFamily,
-                                        fontSize = 10.sp
-                                    )
+                                    // Token Tag
+                                    Row(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(PureBlack)
+                                            .padding(horizontal = 6.dp, vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Text(
+                                            text = "Token: 49.8K / 50K",
+                                            color = MidGray,
+                                            fontFamily = SpaceGroteskFontFamily,
+                                            fontSize = 9.sp
+                                        )
+                                    }
+                                    // CPU Tag
+                                    Row(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(PureBlack)
+                                            .padding(horizontal = 6.dp, vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Text(
+                                            text = "CPU: 3595 / 3600s",
+                                            color = MidGray,
+                                            fontFamily = SpaceGroteskFontFamily,
+                                            fontSize = 9.sp
+                                        )
+                                    }
+                                    // Memory Tag
+                                    Row(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(PureBlack)
+                                            .padding(horizontal = 6.dp, vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        Text(
+                                            text = "Hafıza: 2 Kayıt",
+                                            color = OffWhite,
+                                            fontWeight = FontWeight.Bold,
+                                            fontFamily = SpaceGroteskFontFamily,
+                                            fontSize = 9.sp
+                                        )
+                                    }
                                 }
                             }
                             Spacer(modifier = Modifier.height(8.dp))
@@ -447,7 +491,7 @@ fun ChatScreen(
                                         val active = activeCodeTab == tab
                                         Text(
                                             text = tab,
-                                            color = if (active) Color(0xFF00FFCC) else OffWhite.copy(alpha = 0.5f),
+                                            color = if (active) OffWhite else OffWhite.copy(alpha = 0.5f),
                                             fontWeight = FontWeight.Bold,
                                             fontFamily = SpaceGroteskFontFamily,
                                             fontSize = 13.sp,
@@ -457,7 +501,7 @@ fun ChatScreen(
                                                 .drawBehind {
                                                     if (active) {
                                                         drawLine(
-                                                            color = Color(0xFF00FFCC),
+                                                            color = OffWhite,
                                                             start = Offset(0f, size.height),
                                                             end = Offset(size.width, size.height),
                                                             strokeWidth = 2.dp.toPx()
@@ -540,7 +584,7 @@ fun ChatScreen(
                                         .background(Color(0xFF0D0D0D))
                                         .border(
                                             width = 1.2.dp,
-                                            color = Color(0xFF00FFCC).copy(alpha = borderAlpha),
+                                            color = OffWhite.copy(alpha = borderAlpha),
                                             shape = RoundedCornerShape(20.dp)
                                         )
                                         .padding(horizontal = 14.dp, vertical = 8.dp),
@@ -548,7 +592,7 @@ fun ChatScreen(
                                 ) {
                                     CircularProgressIndicator(
                                         modifier = Modifier.size(12.dp),
-                                        color = Color(0xFF00FFCC),
+                                        color = OffWhite,
                                         strokeWidth = 1.5.dp
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
@@ -1686,14 +1730,14 @@ fun ChatInputBar(
                             Icon(
                                 imageVector = Icons.Sharp.Code,
                                 contentDescription = "Code Mode Toggle",
-                                tint = if (isCodeMode) Color(0xFF00FFCC) else MidGray,
+                                tint = if (isCodeMode) OffWhite else MidGray,
                                 modifier = Modifier.size(18.dp)
                             )
                             if (isCodeMode) {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                     text = "KOD",
-                                    color = Color(0xFF00FFCC),
+                                    color = OffWhite,
                                     fontFamily = SpaceGroteskFontFamily,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 10.sp
@@ -1709,14 +1753,14 @@ fun ChatInputBar(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(Color(0xFF161616))
-                                    .border(1.dp, Color(0xFF00FFCC).copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                                    .border(1.dp, OffWhite.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
                                     .padding(horizontal = 8.dp, vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
                                     imageVector = Icons.Sharp.AutoAwesome,
                                     contentDescription = "Active Skill",
-                                    tint = Color(0xFF00FFCC),
+                                    tint = OffWhite,
                                     modifier = Modifier.size(10.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
@@ -2691,7 +2735,7 @@ fun CatalogCard(
             Icon(
                 imageVector = logoIcon,
                 contentDescription = title,
-                tint = Color(0xFF00FFCC),
+                tint = OffWhite,
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
@@ -3403,7 +3447,7 @@ fun WorkspaceSelectionDialog(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
                         .background(PureBlack)
-                        .border(1.dp, Color(0xFF8A2BE2).copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                        .border(1.dp, DividerColor, RoundedCornerShape(12.dp))
                         .clickable {
                             onWorkspaceSelected("Abdullah6262637/Zeka", "c:\\Users\\HP\\Desktop\\Zeka")
                         }
@@ -3412,7 +3456,7 @@ fun WorkspaceSelectionDialog(
                     Column {
                         Text(
                             text = "Abdullah6262637/Zeka",
-                            color = Color(0xFF00FFCC),
+                            color = OffWhite,
                             fontWeight = FontWeight.Bold,
                             fontFamily = SpaceGroteskFontFamily,
                             fontSize = 14.sp
@@ -3461,7 +3505,7 @@ fun AgentTerminalPanel(
     ) {
         Text(
             text = "GÖREV PLANI VE AKIŞI",
-            color = Color(0xFF00FFCC),
+            color = OffWhite,
             fontWeight = FontWeight.Bold,
             fontFamily = SpaceGroteskFontFamily,
             fontSize = 12.sp
@@ -3620,7 +3664,7 @@ fun AgentTerminalPanel(
                     Spacer(modifier = Modifier.height(12.dp))
                     Button(
                         onClick = onApproveNextStep,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00FFCC), contentColor = PureBlack),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = PureBlack),
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.fillMaxWidth().height(40.dp)
                     ) {
@@ -3767,7 +3811,7 @@ fun PlanChecklistCard(
             ) {
                 Text(
                     text = "GÖREV PLANI",
-                    color = Color(0xFF00FFCC),
+                    color = OffWhite,
                     fontWeight = FontWeight.Bold,
                     fontFamily = SpaceGroteskFontFamily,
                     fontSize = 12.sp
@@ -3956,7 +4000,7 @@ fun McpConsentDialog(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
                 .background(PureBlack)
-                .border(2.dp, Color(0xFF00FFCC), RoundedCornerShape(16.dp))
+                .border(2.dp, OffWhite, RoundedCornerShape(16.dp))
                 .padding(24.dp)
         ) {
             Column(
@@ -3965,7 +4009,7 @@ fun McpConsentDialog(
                 Icon(
                     imageVector = androidx.compose.material.icons.Icons.Default.Lock,
                     contentDescription = "MCP Uyarısı",
-                    tint = Color(0xFF00FFCC),
+                    tint = OffWhite,
                     modifier = Modifier.size(40.dp)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -4005,7 +4049,7 @@ fun McpConsentDialog(
                     }
                     Button(
                         onClick = onApprove,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00FFCC)),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.weight(1f)
                     ) {
@@ -4058,7 +4102,7 @@ fun SkillsSuggestionPopup(
                     Icon(
                         imageVector = Icons.Sharp.AutoAwesome,
                         contentDescription = "Skill",
-                        tint = Color(0xFF00FFCC),
+                        tint = OffWhite,
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
