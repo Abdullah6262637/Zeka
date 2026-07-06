@@ -13,7 +13,11 @@ Projenin sürüm yönetimi [SemVer](https://semver.org/spec/v2.0.0.html) (Semant
   - **Eklenti Yükleyici:** ZIP sıkıştırılmış eklenti paketlerini parse edip `.agents/plugins/` dizinine çıkaran ve etkinleştiren `PluginManager` geliştirildi.
   - **JavaScript Sandbox Yorumlayıcı:** Eklenti veya yetenek betiklerini Docker node sandbox konteyneri içinde izole parametrelerle çalıştıran `JsSandboxExecutor` entegre edildi.
   - **Uç Noktalar:** `/install`, `/plugins` listeleme ve durum güncelleme API rotaları `AgentRoutes` altına eklendi.
-- **Canlı Tool UX & MCP Onay Akışı (Android):**
+- **Gelişmiş Arayüz (UI/UX) & MCP Onay Akışı (Android):**
+  - **Mesaj Kutusuna Entegre Kod Modu:** Kod Modu seçici kontrolü üst menüden kaldırılarak mesaj yazma kutusunun (capsule) sol köşesine yerleştirildi. Aktif edildiğinde temaya uygun yeşil `Icons.Sharp.Code` simgesi ve mini bir `KOD` rozeti belirir.
+  - **Slash Suggester (Yetenek Listesi):** Kullanıcı mesaj alanına `/` (slash) karakterini girdiğinde, kayıtlı tüm yetenekleri listeleyen ve filtreleyen premium monokrom `SkillsSuggestionPopup` açılır.
+  - **Aktif Yetenek Kapsülü:** Bir yetenek seçildiğinde mesaj yazma alanının içinde şık bir active skill kapsülü (`[ ⚡ skill_name ]`) belirir ve gönderilen mesaja o yeteneğin prompt yönergeleri otomatik eklenir.
+  - **Logosuz Kartlar:** Eklenti ve yetenek kartları gereksiz logo resimlerinden arındırılarak minimalist monokrom sistem simgeleriyle optimize edildi.
   - **McpConsentDialog:** Ajan yerel rehbere veya takvime erişmeye çalıştığında açılan, onay veya red yetkisi sunan premium AMOLED siyah & neon yeşil arayüz penceresi.
   - **Canlı Tool Çipleri:** Giriş alanının üstünde konumlanan, aktif aracın durumuna göre pulsing neon border animasyonlu visual live tool indicator.
 
